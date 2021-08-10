@@ -22,7 +22,7 @@ const mongoose = require("mongoose");
 
 // to recieve all req
 app.use(cors());
-
+//
 
 
 /*function getKey(header, callback){
