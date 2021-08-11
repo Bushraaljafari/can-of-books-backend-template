@@ -1,13 +1,20 @@
 'use strict';
-
+// import packege that i need
 const express = require('express');
 require('dotenv').config();
 const cors = require('cors');
-//---save all method inside express
+//---save all method inside express 
 const app = express();
+//----
+const userController = require('./controllers/user.controller');
+const bookModel = require('./models/books.model');
+const userModel = require('./models/users.model');
+
+
 const jwt = require('jsonwebtoken');
 const jwksClient = require('jwks-rsa'); // we are going to use this package to connect to Auth0
 //-----
+//-define the port of this backend server
 const PORT = process.env.PORT;
 const MONGO_DB_URL=process.env.MONGO_DB_URL;
 const JWKSURI = process.env.JWKSURI;
@@ -20,11 +27,11 @@ const client = jwksClient({
   jwksUri: JWKSURI
 });
 
-// to recieve all req
+// open backend app (server)to recieve all req
 app.use(cors());
 ///
-//parse any requested data by axios.post
-server.use(express.json());
+//parse any requested data by axios.post(middleWare)
+app.use(express.json());
 
 
 function getKey(header, callback){
@@ -62,14 +69,16 @@ jwt.verify(token, getKey, {}, (error, user) =>{ // pass it to the auth to check 
 
   // connect mongo with express serves(node)
   mongoose.connect(`${MONGO_DB_URL}/books`, { useNewUrlParser: true , useUnifiedTopology: true  });
+/*
+  //creat collection (file)
+// creat schema for books
 
-
-  const bookSchema=new mongoose.Schema({
-    title:String,
-    description: {typy:String},
-    status: {typy:String}
-  });
-
+const bookSchema=new mongoose.Schema({
+  title:String,
+  description: {typy:String},
+  status: {typy:String}
+});*/
+/*
   //creat user schema
 const userSchema = new mongoose.Schema({
   email: { type: String, unique: true },
@@ -80,7 +89,7 @@ const userSchema = new mongoose.Schema({
 const userModel = mongoose.model('users', userSchema);
 
 //create function to create the collection, model data and seading them in the database
-function seedUserCollection() {
+function seedUsersCollection() {
   const bushra = new userModel({
     email: 'bushra.aljafari@gmail.com',
     books: [
@@ -123,29 +132,30 @@ function seedUserCollection() {
   bushra2.save();
  
 }
-//seedUserCollection();
+//seedUsersCollection();*/
 //-------1
 app.get('/', (req, res) => {
   res.send('hello useless home page');
 });
 ///------2 (reading data) getting email from  frontend to send static data
- app.get('/books', seadBooksCollections);
-
+ app.get('/books',  userController.seadBooksCollections);
+/*
  function seadBooksCollections(req,res){
   let {email} = req.query;
+  //or findOne but make sure user.books
    userModel.find({email:email},function(err,user){
      if(err){ console.log('did not work')
     }
     else{
-      res.send(user[0].books)
+      res.send(user[0].books);
     }
 
-   })
- }
+   });
+ }*/
  
 //-----3 create anew data in the db from frontend //create with an email address
-app.post('/books',createNewBooks);
-
+app.post('/books',userController.createNewBooks);
+/*
 function createNewBooks(req, res) {
 const {bookName,bookDescription,bookStatus,email}=req.body;
 userModel.find({email:email},function (err,user){
@@ -164,12 +174,12 @@ else{
   res.send(user[0].books);
 }
 });
-}
+}*/
 
 //---4 deleting data from the dataBase:
 
-app.delete('/books/:books_id',deleteBooks);
-
+app.delete('/books/:books_id',userController.deleteBooks);
+/*
 function deleteBooks(req,res){
   const booksId=Number(req.params.books_id);
   const {email}=req.query;
@@ -186,7 +196,7 @@ else{
 }
   });
 
-}
+}*/
 //another way
 /*.
 function deleteBooks(req,res){
@@ -197,3 +207,6 @@ function deleteBooks(req,res){
   
   });
 }*/
+
+//---5 update data from DB
+app.put('/user/:index', userController.updateBookInfo);
