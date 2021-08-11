@@ -5,27 +5,29 @@ require('dotenv').config();
 const cors = require('cors');
 //---save all method inside express
 const app = express();
-//const jwt = require('jsonwebtoken');
-//const jwksClient = require('jwks-rsa'); // we are going to use this package to connect to Auth0
+const jwt = require('jsonwebtoken');
+const jwksClient = require('jwks-rsa'); // we are going to use this package to connect to Auth0
 //-----
 const PORT = process.env.PORT;
 const MONGO_DB_URL=process.env.MONGO_DB_URL;
-//const JWKSURI = process.env.JWKSURI;
+const JWKSURI = process.env.JWKSURI;
 
 
 ///-------
 const mongoose = require("mongoose");
 
-/*const client = jwksClient({
+const client = jwksClient({
   jwksUri: JWKSURI
-});*/
+});
 
 // to recieve all req
 app.use(cors());
 ///
+//parse any requested data by axios.post
+server.use(express.json());
 
 
-/*function getKey(header, callback){
+function getKey(header, callback){
   client.getSigningKey(header.kid, function(err, key) {
     var signingKey = key.publicKey || key.rsaPublicKey;
     callback(null, signingKey);
@@ -43,7 +45,7 @@ jwt.verify(token, getKey, {}, (error, user) =>{ // pass it to the auth to check 
   response.json(user);//send user information in the state from auth
 });
 });
-*/
+
  
   // TODO: 
   // STEP 1: get the jwt from the headers
@@ -77,7 +79,8 @@ const userSchema = new mongoose.Schema({
 //create  model (connect the model with collection and schema)
 const userModel = mongoose.model('users', userSchema);
 
-function seedUsersCollection() {
+//create function to create the collection, model data and seading them in the database
+function seedUserCollection() {
   const bushra = new userModel({
     email: 'bushra.aljafari@gmail.com',
     books: [
@@ -100,20 +103,37 @@ function seedUsersCollection() {
     ]
   });
 
+  const bushra2 = new userModel({
+    email: 'bushrajamal291@yahoo.com',
+    books:[
+      {
+        name : 'Pride and Prejudice',
+        description : "romantic novel by Jane Austen",
+        status : 'reading'
+      },
+      {
+        name: 'Broken Wings',
+        description: "a tale of tragic love",
+        status: 'has been read'
+      }
+    ]
+  });
   
-  
-
   bushra.save();
+  bushra2.save();
  
 }
-
- 
-
+//seedUserCollection();
+//-------1
+app.get('/', (req, res) => {
+  res.send('hello useless home page');
+});
+///------2 (reading data) getting email from  frontend to send static data
  app.get('/books', seadBooksCollections);
 
  function seadBooksCollections(req,res){
-  let requestedEmail = req.query.email;
-   userModel.find({email:requestedEmail},function(err,user){
+  let {email} = req.query;
+   userModel.find({email:email},function(err,user){
      if(err){ console.log('did not work')
     }
     else{
@@ -122,7 +142,58 @@ function seedUsersCollection() {
 
    })
  }
- app.get('/', (req, res) => {
-  res.send('hello useless home page');
+ 
+//-----3 create anew data in the db from frontend //create with an email address
+app.post('/books',createNewBooks);
+
+function createNewBooks(req, res) {
+const {bookName,bookDescription,bookStatus,email}=req.body;
+userModel.find({email:email},function (err,user){
+
+if(err){ console.log('did not work')
+}
+else{
+  user[0].books.push(
+    {
+    name:bookName,
+    description:bookDescription,
+    status:bookStatus
+  }
+  )
+  user[0].save();
+  res.send(user[0].books);
+}
 });
-//..
+}
+
+//---4 deleting data from the dataBase:
+
+app.delete('/books/:books_id',deleteBooks);
+
+function deleteBooks(req,res){
+  const booksId=Number(req.params.books_id);
+  const {email}=req.query;
+  userModel.find({email:email},(err,user)=>{
+if (err){ console.log('did not work')}
+else{
+  const booksArr =user[0].books.filter((books,idx)=>{
+    if (booksId !== idx){ return books;}
+  });
+  user[0].books = booksArr;
+  user[0].save();
+  res.send('The book has been successfully deleted');
+
+}
+  });
+
+}
+//another way
+/*.
+function deleteBooks(req,res){
+  const booksId=Number(req.params.books_id);
+  userModel.delete({_id:booksId},(err,deleted) =>  {
+    if (err){console.log('did not work')}
+    else{res.send(deleted);}
+  
+  });
+}*/
