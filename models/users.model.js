@@ -1,6 +1,10 @@
 'use strict';
 const mongoose = require('mongoose');
-const bookModel = require('./books.model');
+const bookSchema=new mongoose.Schema({
+  title:String,
+  description: {typy:String},
+  status: {typy:String}
+});
 
  //creat user schema
  const userSchema = new mongoose.Schema({
